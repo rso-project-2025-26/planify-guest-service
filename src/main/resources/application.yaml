@@ -1,0 +1,52 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: guest-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/planify
+    username: planify
+    password: planify
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: guest_service
+    show-sql: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    schemas: guest_service
+    default-schema: guest_service
+    create-schema: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.planify: DEBUG
+    org.springframework.web: INFO
