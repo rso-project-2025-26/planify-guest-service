@@ -1,8 +1,8 @@
-package com.planify.guestservice.service;
+package com.planify.guest.service;
 
-import com.planify.guestservice.event.KafkaProducer;
-import com.planify.guestservice.model.Invitation;
-import com.planify.guestservice.repository.InvitationRepository;
+import com.planify.guest.event.KafkaProducer;
+import com.planify.guest.model.Invitation;
+import com.planify.guest.repository.InvitationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.planify.guestservice.model;
+package com.planify.guest.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

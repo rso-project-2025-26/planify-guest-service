@@ -1,8 +1,8 @@
-package com.planify.guestservice.event;
+package com.planify.guest.event;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.planify.guestservice.service.GuestService;
+import com.planify.guest.service.GuestService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

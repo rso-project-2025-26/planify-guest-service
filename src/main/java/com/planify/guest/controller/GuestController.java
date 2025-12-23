@@ -1,18 +1,22 @@
-package com.planify.guestservice.controller;
+package com.planify.guest.controller;
 
-import com.planify.guestservice.model.Invitation;
-import com.planify.guestservice.service.GuestService;
+import com.planify.guest.service.SecurityService;
+import com.planify.guest.model.Invitation;
+import com.planify.guest.service.GuestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/guests")
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ import java.util.UUID;
 public class GuestController {
     
     private final GuestService guestService;
+    private final SecurityService securityService;
     
     // Guest Perspective
     @GetMapping("/my-invitations")
@@ -28,8 +33,10 @@ public class GuestController {
             description = "Returns all invitations for the authenticated user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Invitations retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Invitations retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
+    @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<List<Invitation>> getMyInvitations(@RequestParam UUID userId) {
         return ResponseEntity.ok(guestService.getMyInvitations(userId));
     }
@@ -41,11 +48,18 @@ public class GuestController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Invitation found"),
+            @ApiResponse(responseCode = "403", description = "User does not have permission to view invitations for this event"),
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
+    @PreAuthorize("hasAnyRole('ORG_ADMIN', 'ORGANISER')")
     public ResponseEntity<Invitation> getMyInvitation(
             @PathVariable Long eventId,
+            @RequestParam UUID orgId,
             @RequestParam UUID userId) {
+        if (!securityService.hasAnyRoleInOrganization(orgId, List.of("ORG_ADMIN", "ORGANISER"))) {
+            log.warn("User {} does not have permission to view invitations for event {}", userId, eventId);
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(guestService.getMyInvitation(eventId, userId));
     }
     
@@ -55,8 +69,10 @@ public class GuestController {
             description = "Returns all events the user has accepted (RSVP status: ACCEPTED)"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Events retrieved successfully")
+            @ApiResponse(responseCode = "200", description = "Events retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
+    @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<List<Invitation>> getMyAcceptedEvents(@RequestParam UUID userId) {
         return ResponseEntity.ok(guestService.getMyAcceptedEvents(userId));
     }
@@ -69,8 +85,10 @@ public class GuestController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Invitation accepted"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
+    @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<Invitation> acceptInvitation(
             @PathVariable Long eventId,
             @RequestParam UUID userId) {
@@ -84,46 +102,16 @@ public class GuestController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Invitation declined"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
+    @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<Invitation> declineInvitation(
             @PathVariable Long eventId,
             @RequestParam UUID userId) {
         return ResponseEntity.ok(guestService.declineInvitation(eventId, userId));
     }
-    
-    @PutMapping("/my-invitations/{eventId}/maybe")
-    @Operation(
-            summary = "Respond maybe to invitation",
-            description = "Guest responds MAYBE to event invitation"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Response recorded"),
-            @ApiResponse(responseCode = "404", description = "Invitation not found")
-    })
-    public ResponseEntity<Invitation> maybeInvitation(
-            @PathVariable Long eventId,
-            @RequestParam UUID userId) {
-        return ResponseEntity.ok(guestService.maybeInvitation(eventId, userId));
-    }
-    
-    // Check-in
-    @PutMapping("/my-invitations/{eventId}/check-in")
-    @Operation(
-            summary = "Check in to event",
-            description = "Guest checks in at event venue. Requires ACCEPTED status. Publishes 'guest-checked-in' Kafka event."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Checked in successfully"),
-            @ApiResponse(responseCode = "400", description = "Cannot check in - invitation not accepted"),
-            @ApiResponse(responseCode = "404", description = "Invitation not found")
-    })
-    public ResponseEntity<Invitation> checkIn(
-            @PathVariable Long eventId,
-            @RequestParam UUID userId) {
-        return ResponseEntity.ok(guestService.checkIn(eventId, userId));
-    }
-    
+
     // View tracking
     @PostMapping("/my-invitations/{eventId}/mark-viewed")
     @Operation(
@@ -131,8 +119,10 @@ public class GuestController {
             description = "Records that guest has viewed the invitation details"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Marked as viewed")
+            @ApiResponse(responseCode = "200", description = "Marked as viewed"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
+    @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<Void> markAsViewed(
             @PathVariable Long eventId,
             @RequestParam UUID userId) {

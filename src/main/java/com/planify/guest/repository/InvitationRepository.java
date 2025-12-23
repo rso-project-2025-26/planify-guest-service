@@ -1,6 +1,6 @@
-package com.planify.guestservice.repository;
+package com.planify.guest.repository;
 
-import com.planify.guestservice.model.Invitation;
+import com.planify.guest.model.Invitation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
