@@ -53,7 +53,7 @@ public class GuestController {
     })
     @PreAuthorize("hasAnyRole('ORG_ADMIN', 'ORGANISER')")
     public ResponseEntity<Invitation> getMyInvitation(
-            @PathVariable Long eventId,
+            @PathVariable UUID eventId,
             @RequestParam UUID orgId,
             @RequestParam UUID userId) {
         if (!securityService.hasAnyRoleInOrganization(orgId, List.of("ORG_ADMIN", "ORGANISER"))) {
@@ -90,7 +90,7 @@ public class GuestController {
     })
     @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<Invitation> acceptInvitation(
-            @PathVariable Long eventId,
+            @PathVariable UUID eventId,
             @RequestParam UUID userId) {
         return ResponseEntity.ok(guestService.acceptInvitation(eventId, userId));
     }
@@ -107,27 +107,9 @@ public class GuestController {
     })
     @PreAuthorize("hasAnyRole('UPORABNIK')")
     public ResponseEntity<Invitation> declineInvitation(
-            @PathVariable Long eventId,
+            @PathVariable UUID eventId,
             @RequestParam UUID userId) {
         return ResponseEntity.ok(guestService.declineInvitation(eventId, userId));
-    }
-
-    // View tracking
-    @PostMapping("/my-invitations/{eventId}/mark-viewed")
-    @Operation(
-            summary = "Mark invitation as viewed",
-            description = "Records that guest has viewed the invitation details"
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Marked as viewed"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    @PreAuthorize("hasAnyRole('UPORABNIK')")
-    public ResponseEntity<Void> markAsViewed(
-            @PathVariable Long eventId,
-            @RequestParam UUID userId) {
-        guestService.markAsViewed(eventId, userId);
-        return ResponseEntity.ok().build();
     }
     
     // Internal API (for event-manager-service)
@@ -139,7 +121,7 @@ public class GuestController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Invitations retrieved")
     })
-    public ResponseEntity<List<Invitation>> getEventInvitations(@PathVariable Long eventId) {
+    public ResponseEntity<List<Invitation>> getEventInvitations(@PathVariable UUID eventId) {
         return ResponseEntity.ok(guestService.getEventInvitations(eventId));
     }
 }

@@ -9,26 +9,29 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface InvitationRepository extends JpaRepository<Invitation, Long> {
+public interface InvitationRepository extends JpaRepository<Invitation, UUID> {
     
     // Find all invitations for a user
     List<Invitation> findByUserId(UUID userId);
     
     // Find all invitations for an event
-    List<Invitation> findByEventId(Long eventId);
+    List<Invitation> findByEventId(UUID eventId);
+    
+    // Find by organization
+    List<Invitation> findByOrganizationId(UUID organizationId);
     
     // Find specific invitation
-    Optional<Invitation> findByEventIdAndUserId(Long eventId, UUID userId);
+    Optional<Invitation> findByEventIdAndUserId(UUID eventId, UUID userId);
     
     // Check if invitation exists
-    boolean existsByEventIdAndUserId(Long eventId, UUID userId);
+    boolean existsByEventIdAndUserId(UUID eventId, UUID userId);
     
     // Find by RSVP status
     List<Invitation> findByUserIdAndRsvpStatus(UUID userId, Invitation.RsvpStatus status);
     
-    // Find checked-in guests
-    List<Invitation> findByEventIdAndCheckedInTrue(Long eventId);
+    // Find by event and status
+    List<Invitation> findByEventIdAndRsvpStatus(UUID eventId, Invitation.RsvpStatus status);
     
     // Delete all invitations for an event
-    void deleteByEventId(Long eventId);
+    void deleteByEventId(UUID eventId);
 }

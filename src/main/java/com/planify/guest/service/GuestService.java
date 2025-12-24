@@ -28,7 +28,7 @@ public class GuestService {
         return invitationRepository.findByUserId(userId);
     }
     
-    public Invitation getMyInvitation(Long eventId, UUID userId) {
+    public Invitation getMyInvitation(UUID eventId, UUID userId) {
         return invitationRepository.findByEventIdAndUserId(eventId, userId)
             .orElseThrow(() -> new RuntimeException("Invitation not found for event: " + eventId));
     }
@@ -39,7 +39,7 @@ public class GuestService {
     
     // RSVP Management    
     @Transactional
-    public Invitation acceptInvitation(Long eventId, UUID userId) {
+    public Invitation acceptInvitation(UUID eventId, UUID userId) {
         Invitation invitation = getMyInvitation(eventId, userId);
         
         Invitation.RsvpStatus previousStatus = invitation.getRsvpStatus();
@@ -50,7 +50,7 @@ public class GuestService {
         
         // Publish Kafka event
         Map<String, Object> payload = Map.of(
-            "eventId", eventId,
+            "eventId", eventId.toString(),
             "userId", userId.toString(),
             "wasAccepted", previousStatus == Invitation.RsvpStatus.ACCEPTED,
             "timestamp", LocalDateTime.now().toString()
@@ -69,7 +69,7 @@ public class GuestService {
     }
     
     @Transactional
-    public Invitation declineInvitation(Long eventId, UUID userId) {
+    public Invitation declineInvitation(UUID eventId, UUID userId) {
         Invitation invitation = getMyInvitation(eventId, userId);
         
         Invitation.RsvpStatus previousStatus = invitation.getRsvpStatus();
@@ -80,7 +80,7 @@ public class GuestService {
         
         // Publish Kafka event
         Map<String, Object> payload = Map.of(
-            "eventId", eventId,
+            "eventId", eventId.toString(),
             "userId", userId.toString(),
             "wasAccepted", previousStatus == Invitation.RsvpStatus.ACCEPTED,
             "timestamp", LocalDateTime.now().toString()
@@ -99,7 +99,7 @@ public class GuestService {
     }
     
     @Transactional
-    public Invitation maybeInvitation(Long eventId, UUID userId) {
+    public Invitation maybeInvitation(UUID eventId, UUID userId) {
         Invitation invitation = getMyInvitation(eventId, userId);
         
         invitation.setRsvpStatus(Invitation.RsvpStatus.MAYBE);
@@ -111,57 +111,18 @@ public class GuestService {
         return updated;
     }
     
-    // Check-in Management    
-    @Transactional
-    public Invitation checkIn(Long eventId, UUID userId) {
-        Invitation invitation = getMyInvitation(eventId, userId);
-        
-        if (invitation.getRsvpStatus() != Invitation.RsvpStatus.ACCEPTED) {
-            throw new RuntimeException("Cannot check in: invitation not accepted");
-        }
-        
-        invitation.setCheckedIn(true);
-        invitation.setCheckedInAt(LocalDateTime.now());
-        
-        Invitation updated = invitationRepository.save(invitation);
-        
-        // Publish Kafka event
-        Map<String, Object> payload = Map.of(
-            "eventId", eventId,
-            "userId", userId.toString(),
-            "timestamp", LocalDateTime.now().toString()
-        );
-
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String message = mapper.writeValueAsString(payload);
-            kafkaProducer.sendMessage("guest-checked-in", message);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize guest-checked-in payload for user {} in event {}: {}", userId, eventId, e.getMessage(), e);
-        }
-        
-        log.info("User {} checked in to event {}", userId, eventId);
-        return updated;
-    }
-    
-    // View tracking    
-    @Transactional
-    public void markAsViewed(Long eventId, UUID userId) {
-        invitationRepository.findByEventIdAndUserId(eventId, userId)
-            .ifPresent(invitation -> {
-                invitation.setLastViewedAt(LocalDateTime.now());
-                invitationRepository.save(invitation);
-            });
-    }
-    
     // Internal API for event-manager    
-    public List<Invitation> getEventInvitations(Long eventId) {
+    public List<Invitation> getEventInvitations(UUID eventId) {
         return invitationRepository.findByEventId(eventId);
+    }
+    
+    public List<Invitation> getInvitationsByOrganization(UUID organizationId) {
+        return invitationRepository.findByOrganizationId(organizationId);
     }
     
     // Kafka event handlers    
     @Transactional
-    public void handleGuestInvited(Long eventId, UUID userId) {
+    public void handleGuestInvited(UUID eventId, UUID userId, UUID organizationId) {
         // Check if invitation already exists
         if (invitationRepository.existsByEventIdAndUserId(eventId, userId)) {
             log.warn("Invitation already exists for event {} and user {}", eventId, userId);
@@ -171,16 +132,16 @@ public class GuestService {
         Invitation invitation = Invitation.builder()
             .eventId(eventId)
             .userId(userId)
+            .organizationId(organizationId)
             .rsvpStatus(Invitation.RsvpStatus.PENDING)
-            .checkedIn(false)
             .build();
         
         invitationRepository.save(invitation);
-        log.info("Created invitation for user {} to event {}", userId, eventId);
+        log.info("Created invitation for user {} to event {} in organization {}", userId, eventId, organizationId);
     }
     
     @Transactional
-    public void handleGuestRemoved(Long eventId, UUID userId) {
+    public void handleGuestRemoved(UUID eventId, UUID userId) {
         invitationRepository.findByEventIdAndUserId(eventId, userId)
             .ifPresent(invitation -> {
                 invitationRepository.delete(invitation);
@@ -189,7 +150,7 @@ public class GuestService {
     }
     
     @Transactional
-    public void handleEventDeleted(Long eventId) {
+    public void handleEventDeleted(UUID eventId) {
         invitationRepository.deleteByEventId(eventId);
         log.info("Deleted all invitations for event {}", eventId);
     }
