@@ -1,4 +1,4 @@
-package com.planify.guestservice.event;
+package com.planify.guest.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 8085
 
 spring:
   application:
@@ -15,7 +15,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: guest_service
+        default_schema: guest
     show-sql: false
   kafka:
     bootstrap-servers: localhost:9092
@@ -25,12 +25,20 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Preferred: issuer URI so Spring can auto-configure JwtDecoder
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:9080/realms/planify}
+          # Fallback: direct JWK Set URI (kept for flexibility). Must match your Keycloak host/port.
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:9080/realms/planify/protocol/openid-connect/certs}
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    schemas: guest_service
-    default-schema: guest_service
+    schemas: guest
+    default-schema: guest
     create-schema: true
 
 management:

@@ -1,4 +1,4 @@
-package com.planify.guestservice.model;
+package com.planify.guest.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,14 +18,17 @@ import java.util.UUID;
 public class Invitation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(name = "event_id", nullable = false)
-    private Long eventId;
+    private UUID eventId;
     
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+    
+    @Column(name = "organization_id", nullable = false)
+    private UUID organizationId;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "rsvp_status", nullable = false)
@@ -35,24 +38,13 @@ public class Invitation {
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
     
-    @Column(name = "checked_in")
-    @Builder.Default
-    private Boolean checkedIn = false;
-    
-    @Column(name = "checked_in_at")
-    private LocalDateTime checkedInAt;
-    
     @Column(name = "invitation_received_at", nullable = false, updatable = false)
     private LocalDateTime invitationReceivedAt;
-    
-    @Column(name = "last_viewed_at")
-    private LocalDateTime lastViewedAt;
     
     @PrePersist
     protected void onCreate() {
         invitationReceivedAt = LocalDateTime.now();
         if (rsvpStatus == null) rsvpStatus = RsvpStatus.PENDING;
-        if (checkedIn == null) checkedIn = false;
     }
     
     public enum RsvpStatus {
