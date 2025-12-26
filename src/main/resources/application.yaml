@@ -15,7 +15,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: guest_service
+        default_schema: guest
     show-sql: false
   kafka:
     bootstrap-servers: localhost:9092
@@ -37,8 +37,8 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    schemas: guest_service
-    default-schema: guest_service
+    schemas: guest
+    default-schema: guest
     create-schema: true
 
 management:
