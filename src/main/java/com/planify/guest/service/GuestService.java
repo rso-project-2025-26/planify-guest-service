@@ -144,8 +144,29 @@ public class GuestService {
     public void handleGuestRemoved(UUID eventId, UUID userId) {
         invitationRepository.findByEventIdAndUserId(eventId, userId)
             .ifPresent(invitation -> {
+                boolean wasAccepted = invitation.getRsvpStatus() == Invitation.RsvpStatus.ACCEPTED;
+                
+                if (wasAccepted) {
+                    // Publish rsvp-declined event to decrement attendee count
+                    Map<String, Object> payload = Map.of(
+                        "eventId", eventId.toString(),
+                        "userId", userId.toString(),
+                        "wasAccepted", true,
+                        "timestamp", LocalDateTime.now().toString()
+                    );
+
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        String message = mapper.writeValueAsString(payload);
+                        kafkaProducer.sendMessage("rsvp-declined", message);
+                        log.info("Published rsvp-declined for removed guest {} from event {}", userId, eventId);
+                    } catch (JsonProcessingException e) {
+                        log.error("Failed to serialize rsvp-declined for removed guest: {}", e.getMessage());
+                    }
+                }
+                
                 invitationRepository.delete(invitation);
-                log.info("Deleted invitation for user {} from event {}", userId, eventId);
+                log.info("Deleted invitation for user {} from event {} (wasAccepted: {})", userId, eventId, wasAccepted);
             });
     }
     
