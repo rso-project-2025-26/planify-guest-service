@@ -38,8 +38,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        // Actuator health/info open
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // Actuator open
+                        .requestMatchers("/actuator/**").permitAll()
                         // Public events endpoint
                         .requestMatchers("/api/guests/**").permitAll()
                         // Vsi ostali endpointi
