@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guest-service-config
+data:
+  SERVER_PORT: {{ .Values.config.serverPort | quote }}
+  DB_URL: {{ .Values.config.database.url | quote }}
+  DB_SCHEMA: {{ .Values.config.database.schema | quote }}
+  DB_POOL_SIZE: {{ .Values.config.database.poolSize | quote }}
+  DB_POOL_MIN_IDLE: {{ .Values.config.database.poolMinIdle | quote }}
+  DB_CONN_TIMEOUT: {{ .Values.config.database.connTimeout | quote }}
+  JPA_DDL_AUTO: {{ .Values.config.jpa.ddlAuto | quote }}
+  JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
+  KEYCLOAK_URL: {{ .Values.config.keycloak.url | quote }}
+  KEYCLOAK_REALM: {{ .Values.config.keycloak.realm | quote }}
+  KEYCLOAK_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
+  KEYCLOAK_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
+  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
+  KAFKA_CONSUMER_GROUP: {{ .Values.config.kafka.consumerGroup | quote }}
+  KAFKA_AUTO_OFFSET_RESET: {{ .Values.config.kafka.autoOffsetReset | quote }}
+  FLYWAY_ENABLED: {{ .Values.config.flyway.enabled | quote }}
+  SWAGGER_ENABLED: {{ .Values.config.swagger.enabled | quote }}
+  LOG_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
+  LOG_LEVEL_APP: {{ .Values.config.logging.levelApp | quote }}
+  LOG_LEVEL_SPRING_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
+  LOG_LEVEL_SPRING_SECURITY: {{ .Values.config.logging.levelSpringSecurity | quote }}
+  LOG_LEVEL_HIBERNATE_SQL: {{ .Values.config.logging.levelHibernateSql | quote }}
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfilesActive | quote }}
