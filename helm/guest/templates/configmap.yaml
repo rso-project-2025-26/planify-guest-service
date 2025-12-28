@@ -4,25 +4,23 @@ metadata:
   name: guest-service-config
 data:
   SERVER_PORT: {{ .Values.config.serverPort | quote }}
-  DB_URL: {{ .Values.config.database.url | quote }}
-  DB_SCHEMA: {{ .Values.config.database.schema | quote }}
-  DB_POOL_SIZE: {{ .Values.config.database.poolSize | quote }}
-  DB_POOL_MIN_IDLE: {{ .Values.config.database.poolMinIdle | quote }}
-  DB_CONN_TIMEOUT: {{ .Values.config.database.connTimeout | quote }}
-  JPA_DDL_AUTO: {{ .Values.config.jpa.ddlAuto | quote }}
-  JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
-  KEYCLOAK_URL: {{ .Values.config.keycloak.url | quote }}
-  KEYCLOAK_REALM: {{ .Values.config.keycloak.realm | quote }}
-  KEYCLOAK_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
-  KEYCLOAK_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
-  KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
-  KAFKA_CONSUMER_GROUP: {{ .Values.config.kafka.consumerGroup | quote }}
-  KAFKA_AUTO_OFFSET_RESET: {{ .Values.config.kafka.autoOffsetReset | quote }}
-  FLYWAY_ENABLED: {{ .Values.config.flyway.enabled | quote }}
-  SWAGGER_ENABLED: {{ .Values.config.swagger.enabled | quote }}
-  LOG_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
-  LOG_LEVEL_APP: {{ .Values.config.logging.levelApp | quote }}
-  LOG_LEVEL_SPRING_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
-  LOG_LEVEL_SPRING_SECURITY: {{ .Values.config.logging.levelSpringSecurity | quote }}
-  LOG_LEVEL_HIBERNATE_SQL: {{ .Values.config.logging.levelHibernateSql | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.config.database.url | quote }}
+  SPRING_JPA_HIBERNATE_DDL_AUTO: {{ .Values.config.jpa.ddlAuto | quote }}
+  SPRING_JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
+  SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: {{ .Values.config.database.schema | quote }}
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: {{ .Values.config.database.poolSize | quote }}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: {{ .Values.config.database.poolMinIdle | quote }}
+  SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: {{ .Values.config.database.connTimeout | quote }}
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
+  SPRING_KAFKA_CONSUMER_GROUP_ID: {{ .Values.config.kafka.consumerGroup | quote }}
+  SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: {{ .Values.config.kafka.autoOffsetReset | quote }}
+  SPRING_FLYWAY_ENABLED: {{ .Values.config.flyway.enabled | quote }}
+  SPRING_FLYWAY_SCHEMAS: {{ .Values.config.database.schema | quote }}
+  SPRING_FLYWAY_DEFAULT_SCHEMA: {{ .Values.config.database.schema | quote }}
+  LOGGING_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
+  LOGGING_LEVEL_COM_PLANIFY: {{ .Values.config.logging.levelApp | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: {{ .Values.config.logging.levelSpringSecurity | quote }}
   SPRING_PROFILES_ACTIVE: {{ .Values.config.springProfilesActive | quote }}

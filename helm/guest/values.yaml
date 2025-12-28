@@ -16,7 +16,7 @@ service:
 resources:
   requests:
     memory: "512Mi"
-    cpu: "250m"
+    cpu: "100m"
   limits:
     memory: "1Gi"
     cpu: "500m"
@@ -47,7 +47,6 @@ config:
     ddlAuto: "validate"
     showSql: "false"
   keycloak:
-    url: "http://keycloak-service:8080"
     realm: "planify"
     issuerUri: "http://keycloak-service:8080/realms/planify"
     jwkSetUri: "http://keycloak-service:8080/realms/planify/protocol/openid-connect/certs"
