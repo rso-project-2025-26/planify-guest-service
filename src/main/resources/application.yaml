@@ -1,26 +1,30 @@
 server:
-  port: 8085
+  port: ${SERVER_PORT:8085}
 
 spring:
   application:
     name: guest-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/planify
-    username: planify
-    password: planify
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/planify}
+    username: ${SPRING_DATASOURCE_USERNAME:planify}
+    password: ${SPRING_DATASOURCE_PASSWORD:planify}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
-        default_schema: guest
-    show-sql: false
+        default_schema: ${DB_SCHEMA:guest}
+    show-sql: ${JPA_SHOW_SQL:false}
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
-      group-id: ${spring.application.name}
+      group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:guest-service}
       auto-offset-reset: earliest
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -29,23 +33,21 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Preferred: issuer URI so Spring can auto-configure JwtDecoder
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:9080/realms/planify}
-          # Fallback: direct JWK Set URI (kept for flexibility). Must match your Keycloak host/port.
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://localhost:9080/realms/planify/protocol/openid-connect/certs}
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:9080/realms/planify}
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI:http://localhost:9080/realms/planify/protocol/openid-connect/certs}
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    schemas: guest
-    default-schema: guest
+    schemas: ${SPRING_FLYWAY_SCHEMAS:guest}
+    default-schema: ${SPRING_FLYWAY_DEFAULT_SCHEMA:guest}
     create-schema: true
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,prometheus,info,metrics
+        include: ${MANAGEMENT_ENDPOINTS_INCLUDE:health,prometheus,info,metrics}
   endpoint:
     health:
       show-details: always
@@ -56,5 +58,7 @@ management:
 
 logging:
   level:
-    com.planify: DEBUG
-    org.springframework.web: INFO
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    com.planify: ${LOGGING_LEVEL_COM_PLANIFY:DEBUG}
+    org.springframework.web: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB:INFO}
+    org.springframework.security: ${LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY:WARN}
