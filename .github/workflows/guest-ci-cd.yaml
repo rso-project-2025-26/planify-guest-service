@@ -2,7 +2,7 @@ name: Guest Service - CI/CD
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, feature/configuration]
 
 env:
   REGISTRY: ghcr.io
@@ -45,7 +45,7 @@ jobs:
     name: Build Docker Image
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/feature/configuration')
     permissions:
       contents: read
       packages: write
