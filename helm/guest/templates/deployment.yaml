@@ -30,7 +30,7 @@ spec:
         - configMapRef:
             name: guest-service-config
         - secretRef:
-            name: guest-service-secrets
+            name: postgres-secret
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory | quote }}
