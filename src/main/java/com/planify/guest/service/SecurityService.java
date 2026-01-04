@@ -1,5 +1,8 @@
 package com.planify.guest.service;
 
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +34,9 @@ public class SecurityService {
      * 
      * User-service endpoint: GET {userServiceBaseUrl}/{orgId}/roles -> returns JSON array of strings.
      */
+    @Retry(name = "keycloakService")
+    @Bulkhead(name = "keycloakService")
+    @CircuitBreaker(name = "keycloakService", fallbackMethod = "hasAnyRoleInOrganizationFallback")
     public boolean hasAnyRoleInOrganization(UUID orgId, Collection<String> requiredRoles) {
         if (orgId == null) {
             log.warn("Organization ID is null when checking roles.");
@@ -86,6 +92,13 @@ public class SecurityService {
             log.error("Error while checking organization roles via user-service: {}", ex.getMessage(), ex);
             return false;
         }
+    }
+
+    private boolean hasAnyRoleInOrganizationFallback(UUID orgId, Collection<String> requiredRoles, Exception ex) {
+        log.error("User-service is unavailable. Falling back for organization roles check. OrgId: {}, Error: {}", 
+                  orgId, ex.getMessage());
+        // Privzeto zavrni dostop, če ne moremo preveriti vlog
+        return false;
     }
 
     private String resolveBearerToken() {
