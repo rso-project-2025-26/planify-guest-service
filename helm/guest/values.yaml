@@ -1,0 +1,60 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/rso-project-2025-26/planify-guest-service
+  tag: main
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+service:
+  type: ClusterIP
+  port: 8085
+  targetPort: 8085
+
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+probes:
+  liveness:
+    path: /actuator/health
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readiness:
+    path: /actuator/health
+    initialDelaySeconds: 90
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+config:
+  springProfilesActive: prod
+  
+  serverPort: "8085"
+  database:
+    url: "jdbc:postgresql://postgres-service:5432/planify"
+    schema: "guest"
+  kafka:
+    bootstrapServers: "kafka-service:9092"
+    consumerGroup: "guest-service"
+  keycloak:
+    issuerUri: "http://keycloak-service:8080/realms/planify"
+    jwkSetUri: "http://keycloak-service:8080/realms/planify/protocol/openid-connect/certs"
+  
+  jpa:
+    showSql: "false"
+  management:
+    endpointsInclude: "health,prometheus,info,metrics"
+  logging:
+    levelRoot: "WARN"
+    levelApp: "INFO"
+    levelSpringWeb: "WARN"
+    levelSpringSecurity: "WARN"

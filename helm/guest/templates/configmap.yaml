@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: guest-service-config
+data:
+  SERVER_PORT: {{ .Values.config.serverPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.config.database.url | quote }}
+  DB_SCHEMA: {{ .Values.config.database.schema | quote }}
+  SPRING_FLYWAY_SCHEMAS: {{ .Values.config.database.schema | quote }}
+  SPRING_FLYWAY_DEFAULT_SCHEMA: {{ .Values.config.database.schema | quote }}
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: {{ .Values.config.kafka.bootstrapServers | quote }}
+  SPRING_KAFKA_CONSUMER_GROUP_ID: {{ .Values.config.kafka.consumerGroup | quote }}
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
+  JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
+  MANAGEMENT_ENDPOINTS_INCLUDE: {{ .Values.config.management.endpointsInclude | quote }}
+  LOGGING_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
+  LOGGING_LEVEL_COM_PLANIFY: {{ .Values.config.logging.levelApp | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: {{ .Values.config.logging.levelSpringSecurity | quote }}
