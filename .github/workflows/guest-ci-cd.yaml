@@ -120,7 +120,7 @@ jobs:
             VALUES_FILE="values-dev.yaml"
           fi
 
-          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+          IMAGE_TAG="${{ github.ref_name }}-$(echo ${{ github.sha }} | cut -c1-7)"
 
           helm upgrade --install guest ./helm/guest \
             --namespace ${NAMESPACE} \
