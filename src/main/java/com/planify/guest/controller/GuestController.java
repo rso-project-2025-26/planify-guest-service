@@ -89,10 +89,15 @@ public class GuestController {
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
     @PreAuthorize("hasAnyRole('UPORABNIK')")
-    public ResponseEntity<Invitation> acceptInvitation(
+    public ResponseEntity<?> acceptInvitation(
             @PathVariable UUID eventId,
             @RequestParam UUID userId) {
-        return ResponseEntity.ok(guestService.acceptInvitation(eventId, userId));
+        try {
+            Invitation invitation = guestService.acceptInvitation(eventId, userId);
+            return ResponseEntity.ok(invitation);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body("Invitation not found.");
+        }
     }
     
     @PutMapping("/my-invitations/{eventId}/decline")
@@ -106,10 +111,15 @@ public class GuestController {
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
     @PreAuthorize("hasAnyRole('UPORABNIK')")
-    public ResponseEntity<Invitation> declineInvitation(
+    public ResponseEntity<?> declineInvitation(
             @PathVariable UUID eventId,
             @RequestParam UUID userId) {
-        return ResponseEntity.ok(guestService.declineInvitation(eventId, userId));
+        try {
+            Invitation invitation = guestService.declineInvitation(eventId, userId);
+            return ResponseEntity.ok(invitation);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body("Invitation not found.");
+        }
     }
     
     // Internal API (for event-manager-service)
