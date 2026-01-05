@@ -1,190 +1,394 @@
 # Guest Service
 
-Guest-facing microservice for managing event invitations, RSVP responses, and check-ins.
+Microservice for managing event invitations and RSVP responses from the guest perspective in the Planify platform. Provides RESTful APIs secured with Keycloak authentication, consumes events from event-manager-service via Kafka, and publishes RSVP status updates.
 
-## Purpose
+## Technologies
 
-Handles all guest interactions with events:
-- View received invitations
-- Respond to invitations (accept/decline/maybe)
-- Check in at event venues
-- Track invitation view history
+### Backend Framework & Language
+- **Java 21** - Programming language
+- **Spring Boot 3.5.7** - Application framework
+- **Spring Security** - Security and authentication
+- **Spring Data JPA** - Database access
+- **Hibernate** - ORM framework
+- **Lombok** - Boilerplate code reduction
 
-## Architecture
+### Database
+- **PostgreSQL** - Database
+- **Flyway** - Database migrations
+- **HikariCP** - Connection pooling
 
-- **Port**: 8083
-- **Database**: PostgreSQL (schema: guest_service)
-- **Messaging**: Kafka consumer & producer
-- **API Documentation**: Swagger UI at http://localhost:8083/swagger-ui.html
+### Security & Authentication
+- **Keycloak** - OAuth2/OIDC authentication and authorization
+- **Spring OAuth2 Resource Server** - JWT validation
 
-## Database Schema
+### Messaging System
+- **Apache Kafka** - Event streaming platform
+- **Spring Kafka** - Kafka integration
 
-### invitations table
-| Column | Type | Description |
-|--------|------|-------------|
-| id | BIGSERIAL | Primary key |
-| event_id | BIGINT | Reference to event (no FK - cross-database) |
-| user_id | UUID | Reference to user in user-service |
-| rsvp_status | VARCHAR(50) | PENDING, ACCEPTED, DECLINED, MAYBE |
-| responded_at | TIMESTAMP | When guest responded |
-| checked_in | BOOLEAN | Whether guest checked in |
-| checked_in_at | TIMESTAMP | When guest checked in |
-| invitation_received_at | TIMESTAMP | When invitation was created |
-| last_viewed_at | TIMESTAMP | Last time guest viewed invitation |
+### Monitoring & Health
+- **Spring Boot Actuator** - Health checks and metrics
+- **Micrometer Prometheus** - Metrics export
+- **Resilience4j** - Circuit breakers, retry, rate limiting, bulkheads
 
-**Constraints:**
-- UNIQUE(event_id, user_id) - one invitation per guest per event
+### API Documentation
+- **SpringDoc OpenAPI 3** - OpenAPI/Swagger documentation
+
+### Containerization
+- **Docker** - Application containerization
+- **Kubernetes/Helm** - Orchestration (Helm charts included)
+
+## System Integrations
+
+- **Keycloak**: OAuth2/OIDC authentication and authorization. All endpoints require a valid JWT Bearer token.
+- **Kafka**: Consumes events from event-manager-service (guest invitations, event updates) and publishes RSVP status changes consumed by event-manager-service, notification-service, and analytics-service.
+- **PostgreSQL**: Stores all invitation and RSVP data via Hibernate/JPA with Flyway migrations in the `guest` schema.
+- **event-manager-service**: Receives guest invitation events and provides internal API for querying invitation statuses.
+- **notification-service**: Receives RSVP events to send confirmation emails/notifications.
+- **analytics-service**: Receives RSVP events to track guest engagement metrics.
+
+## Roles
+
+### Keycloak Roles
+
+Application-wide roles managed by Keycloak and enforced in this service:
+
+- **UPORABNIK** — Standard authenticated user (can view and respond to their own invitations)
+- **ORGANISER** — Can view invitation details for events in their organization
+- **ORG_ADMIN** — Full organization admin permissions + organiser capabilities
+- **ADMINISTRATOR** — System administrator with access to all invitations
 
 ## API Endpoints
 
-### Guest Perspective
+All endpoints require `Authorization: Bearer <JWT_TOKEN>` header unless otherwise specified.
 
-| Action                   | Method | Endpoint                                                               |
-|--------------------------|--------|-------------------------------------------------------------------------|
-| Get My Invitations       | GET    | `/api/guests/my-invitations?userId={uuid}`                             |
-| Get Specific Invitation  | GET    | `/api/guests/my-invitations/{eventId}?userId={uuid}`                   |
-| Get My Accepted Events   | GET    | `/api/guests/my-events?userId={uuid}`                                  |
-| Accept Invitation        | PUT    | `/api/guests/my-invitations/{eventId}/accept?userId={uuid}`            |
-| Decline Invitation       | PUT    | `/api/guests/my-invitations/{eventId}/decline?userId={uuid}`           |
-| Respond Maybe            | PUT    | `/api/guests/my-invitations/{eventId}/maybe?userId={uuid}`             |
-| Check In                 | PUT    | `/api/guests/my-invitations/{eventId}/check-in?userId={uuid}`          |
-| Mark as Viewed           | POST   | `/api/guests/my-invitations/{eventId}/mark-viewed?userId={uuid}`       |
+### Guest Perspective (`/api/guests`)
+
+- `GET /api/guests/my-invitations?userId={userId}` — Get all invitations for authenticated user
+- `GET /api/guests/my-invitations/{eventId}?orgId={orgId}&userId={userId}` — Get specific invitation details (ORG_ADMIN or ORGANISER)
+- `GET /api/guests/my-events?userId={userId}` — Get all accepted events for authenticated user
+
+### RSVP Actions
+
+- `PUT /api/guests/my-invitations/{eventId}/accept?userId={userId}` — Accept invitation (publishes Kafka event)
+- `PUT /api/guests/my-invitations/{eventId}/decline?userId={userId}` — Decline invitation (publishes Kafka event)
 
 ### Internal API (for event-manager-service)
 
-| Action                | Method | Endpoint                                                       |
-|-----------------------|--------|-----------------------------------------------------------------|
-| Get Event Invitations | GET    | `/api/guests/internal/events/{eventId}/invitations`            |
-| Count Accepted Guests | GET    | `/api/guests/internal/events/{eventId}/accepted-count`         |
+- `GET /api/guests/internal/events/{eventId}/invitations` — Get all invitations for an event
 
-## Kafka Integration
+### Minimal curl examples
 
-### Consumed Topics
+```bash
+# Get my invitations
+curl -H "Authorization: Bearer $TOKEN" \
+     "http://localhost:8085/api/guests/my-invitations?userId=990e8400-e29b-41d4-a716-446655440004"
 
-**guest-invited**
-- Triggered when: Organizer invites guest in event-manager-service
-- Action: Creates invitation record with PENDING status
-- Payload:
+# Accept invitation
+curl -X PUT -H "Authorization: Bearer $TOKEN" \
+     "http://localhost:8085/api/guests/my-invitations/550e8400-e29b-41d4-a716-446655440000/accept?userId=990e8400-e29b-41d4-a716-446655440004"
+
+# Decline invitation
+curl -X PUT -H "Authorization: Bearer $TOKEN" \
+     "http://localhost:8085/api/guests/my-invitations/550e8400-e29b-41d4-a716-446655440000/decline?userId=990e8400-e29b-41d4-a716-446655440004"
+
+# Get my accepted events
+curl -H "Authorization: Bearer $TOKEN" \
+     "http://localhost:8085/api/guests/my-events?userId=990e8400-e29b-41d4-a716-446655440004"
+```
+
+## Database Structure
+
+The service uses PostgreSQL with the following core entity in the `guest` schema:
+
+### Invitations
+
+Guest invitation records with RSVP status tracking. Contains:
+
+- `id` (UUID, PK)
+- `event_id` (UUID) - Reference to event in event-manager-service
+- `user_id` (UUID) - Reference to user in user-service
+- `organization_id` (UUID) - Organization ID for permission checks
+- `rsvp_status` (VARCHAR) - RSVP status: `PENDING`, `ACCEPTED`, `DECLINED`, `MAYBE`
+- `responded_at` (TIMESTAMP) - Time when guest responded to invitation
+- `invitation_received_at` (TIMESTAMP) - Time when invitation was created
+
+**Indexes:**
+- `idx_invitations_event` on `event_id`
+- `idx_invitations_user` on `user_id`
+- `idx_invitations_organization` on `organization_id`
+- `idx_invitations_rsvp_status` on `rsvp_status`
+
+**Constraints:**
+- Unique constraint on `(event_id, user_id)` - prevents duplicate invitations
+- No foreign key constraints as references cross database schemas
+
+**Relationships**: All entity references use UUIDs for cross-service lookups without foreign key constraints. Audit fields (`invitation_received_at`, `responded_at`) track invitation lifecycle. Database schema is versioned via Flyway migrations in `src/main/resources/db/migration/`.
+
+**Note**: This service tracks RSVP status from the guest perspective. The `event-manager-service` maintains a separate `guest_list` table tracking who was invited from the organizer's perspective.
+
+## Installation and Setup
+
+### Prerequisites
+
+- Java 21 or newer
+- Maven 3.6+
+- Docker and Docker Compose
+- Git
+
+### Infrastructure Setup
+
+This service requires PostgreSQL, Kafka, Keycloak, and event-manager-service to run. These dependencies are provided via Docker containers in the main Planify repository.
+
+Clone and setup the infrastructure:
+
+```bash
+# Clone the main Planify repository
+git clone https://github.com/rso-project-2025-26/planify.git
+cd planify
+
+# Follow the setup instructions in the main repository README
+# This will start all required infrastructure services (PostgreSQL, Kafka, Keycloak)
+```
+
+Refer to the main Planify repository (https://github.com/rso-project-2025-26/planify) documentation for detailed infrastructure setup instructions.
+
+### Configuration
+
+The application uses a single `application.yaml` configuration file located in `src/main/resources/`.
+
+Important environment variables:
+
+```
+SERVER_PORT=8085
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/planify
+SPRING_DATASOURCE_USERNAME=planify
+SPRING_DATASOURCE_PASSWORD=planify
+DB_SCHEMA=guest
+SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+SPRING_KAFKA_CONSUMER_GROUP_ID=guest-service
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:9080/realms/planify
+SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://localhost:9080/realms/planify/protocol/openid-connect/certs
+```
+
+### Local Run
+
+```bash
+# Build project
+mvn clean package
+
+# Run application
+mvn spring-boot:run
+```
+
+### Using Makefile
+
+```bash
+# Build project
+make build
+
+# Docker build
+make docker-build
+
+# Docker run
+make docker-run
+
+# Tests
+make test
+```
+
+### Docker Run
+
+```bash
+# Build Docker image
+docker build -t planify/guest-service:0.0.1 .
+
+# Run container
+docker run -p 8085:8085 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/planify \
+  -e SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://host.docker.internal:9080/realms/planify \
+  -e SPRING_KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:9092 \
+  planify/guest-service:0.0.1
+```
+
+### Kubernetes/Helm Deployment
+
+```bash
+# Install with Helm
+helm install guest-service ./helm/guest
+
+# Install with specific environment values
+helm install guest-service ./helm/guest -f ./helm/guest/values-dev.yaml
+
+# Upgrade
+helm upgrade guest-service ./helm/guest
+
+# Uninstall
+helm uninstall guest-service
+```
+
+### Flyway Migrations
+
+Migrations are located in `src/main/resources/db/migration/`:
+
+- `V1__init.sql` - Initial schema with invitations table and indexes
+
+Manual migration run:
+
+```bash
+mvn flyway:migrate
+```
+
+## Health Check & Monitoring
+
+### Actuator Endpoints
+
+- **GET** `/actuator/health` — Health check endpoint
+- **GET** `/actuator/health/liveness` — Liveness probe
+- **GET** `/actuator/health/readiness` — Readiness probe
+- **GET** `/actuator/prometheus` — Prometheus metrics
+- **GET** `/actuator/info` — Application information
+- **GET** `/actuator/metrics` — Application metrics
+
+### API Documentation
+
+After starting the application, Swagger UI is available at:
+```
+http://localhost:8085/swagger-ui.html
+```
+
+OpenAPI specification:
+```
+http://localhost:8085/api-docs
+```
+
+## Kafka Events
+
+### Events Consumed
+
+The service listens to the following Kafka topics:
+
+**guest-invited** — Published by event-manager-service when organizer invites a guest
+
+Consumed payload:
 ```json
 {
-  "eventId": 1,
-  "userId": "uuid-string",
-  "invitedBy": "uuid-string",
-  "invitedAt": "2025-12-12T10:00:00"
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "990e8400-e29b-41d4-a716-446655440004",
+  "organizationId": "880e8400-e29b-41d4-a716-446655440003",
+  "timestamp": "2024-12-24T10:00:00Z"
 }
 ```
 
-**guest-removed**
-- Triggered when: Organizer removes guest in event-manager-service
-- Action: Deletes invitation record
-- Payload:
+Action: Creates new invitation record with status `PENDING`
+
+**guest-removed** — Published by event-manager-service when organizer removes a guest
+
+Consumed payload:
 ```json
 {
-  "eventId": 1,
-  "userId": "uuid-string",
-  "removedBy": "uuid-string",
-  "removedAt": "2025-12-12T10:00:00"
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "990e8400-e29b-41d4-a716-446655440004",
+  "timestamp": "2024-12-24T10:00:00Z"
 }
 ```
 
-**event-deleted**
-- Triggered when: Event is deleted in event-manager-service
-- Action: Deletes all invitations for that event
-- Payload:
+Action: Deletes invitation record. If guest had previously accepted, publishes `rsvp-declined` event to update attendee count.
+
+**event-deleted** — Published by event-manager-service when event is deleted
+
+Consumed payload:
 ```json
 {
-  "eventId": 1,
-  "deletedAt": "2025-12-12T10:00:00"
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2024-12-24T10:00:00Z"
 }
 ```
 
-### Published Topics
+Action: Deletes all invitations associated with the event
 
-**rsvp-accepted**
-- Triggered when: Guest accepts invitation
-- Consumed by: event-manager-service (increments current_attendees)
-- Payload:
+Additional consumed topics (for future features):
+- `event-created` - Track new events (currently logged only)
+- `event-updated` - Track event changes (currently logged only)
+
+### Events Published
+
+The service publishes the following events to Kafka:
+
+**rsvp-accepted** — Published when a guest accepts an event invitation
+
+Published payload:
 ```json
 {
-  "eventId": 1,
-  "userId": "uuid-string",
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "990e8400-e29b-41d4-a716-446655440004",
   "wasAccepted": false,
-  "timestamp": "2025-12-12T10:00:00"
+  "timestamp": "2024-12-24T10:00:00Z"
 }
 ```
 
-**rsvp-declined**
-- Triggered when: Guest declines invitation
-- Consumed by: event-manager-service (decrements current_attendees if wasAccepted=true)
-- Payload:
+Consumed by:
+- **event-manager-service** - Updates `current_attendees` count
+- **notification-service** - Sends confirmation email/notification to guest
+- **analytics-service** - Tracks RSVP metrics
+
+**rsvp-declined** — Published when a guest declines an event invitation
+
+Published payload:
 ```json
 {
-  "eventId": 1,
-  "userId": "uuid-string",
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "userId": "990e8400-e29b-41d4-a716-446655440004",
   "wasAccepted": true,
-  "timestamp": "2025-12-12T10:00:00"
+  "timestamp": "2024-12-24T10:00:00Z"
 }
 ```
 
-**guest-checked-in**
-- Triggered when: Guest checks in at event
-- Consumed by: analytics-service (future)
-- Payload:
-```json
-{
-  "eventId": 1,
-  "userId": "uuid-string",
-  "timestamp": "2025-12-12T10:00:00"
-}
+Note: `wasAccepted` indicates if the guest had previously accepted (useful for decrementing attendee count)
+
+Consumed by:
+- **event-manager-service** - Updates `current_attendees` count if guest had previously accepted
+- **notification-service** - Sends notification to organizer
+- **analytics-service** - Tracks RSVP metrics
+
+## Resilience4j
+
+The service implements:
+
+- **Circuit Breakers** - Prevention of cascading failures for:
+  - `keycloakService` - Protects user validation calls
+  - `defaultCircuitBreaker` - General protection for other operations
+- **Retry** - Automatic retry of failed calls with exponential backoff
+- **Rate Limiting** - Request rate limiting to prevent overload
+- **Bulkheads** - Resource isolation for concurrent operations
+- **Time Limiters** - Timeout protection for long-running operations
+
+Configuration is managed via `application.yaml` with health indicators exposed through Actuator.
+
+**Example Configuration:**
+```yaml
+resilience4j:
+  circuitbreaker:
+    instances:
+      keycloakService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
 ```
 
-## Integration with Other Services
+## Testing
 
-### user-service
-- Uses UUID for userId (references users table)
-- No direct API calls - data sync via Kafka
-
-### event-manager-service
-- Receives invitations via Kafka (guest-invited, guest-removed)
-- Sends RSVP updates via Kafka (rsvp-accepted, rsvp-declined)
-- event-manager queries guest-service for invitation counts
-
-## Running Locally
-
-1. Start infrastructure:
 ```bash
-cd infrastructure
-docker compose up -d
+# Run all tests
+mvn test
+
+# Run specific test
+mvn test -Dtest=GuestServiceTest
+
+# Run with coverage report
+mvn test jacoco:report
 ```
 
-2. Run the service:
-```bash
-./mvnw spring-boot:run
-```
+Tests are located in `src/test/java/com/planify/guest/` and include:
 
-3. Access Swagger UI:
-```
-http://localhost:8083/swagger-ui.html
-```
-
-## Configuration
-
-Key application properties:
-- `server.port`: 8083
-- `spring.datasource.url`: jdbc:postgresql://localhost:5432/planify
-- `spring.jpa.properties.hibernate.default_schema`: guest_service
-- `spring.kafka.bootstrap-servers`: localhost:9092
-- `spring.kafka.consumer.group-id`: guest-service
-
-## Business Logic
-
-### RSVP Status Transitions
-- PENDING → ACCEPTED (publishes rsvp-accepted with wasAccepted=false)
-- PENDING → DECLINED (publishes rsvp-declined with wasAccepted=false)
-- ACCEPTED → DECLINED (publishes rsvp-declined with wasAccepted=true)
-- DECLINED → ACCEPTED (publishes rsvp-accepted with wasAccepted=false)
-
-### Check-in Rules
-- Guest must have ACCEPTED status to check in
-- Check-in is idempotent (can be called multiple times)
-- Publishes guest-checked-in event for analytics
+- `GuestServiceTest` - Invitation management and RSVP logic
+- Integration tests for Kafka event processing

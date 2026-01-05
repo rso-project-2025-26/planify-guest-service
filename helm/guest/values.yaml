@@ -58,3 +58,9 @@ config:
     levelApp: "INFO"
     levelSpringWeb: "WARN"
     levelSpringSecurity: "WARN"
+
+  swagger:
+    enabled: "false"
+
+  context:
+    path: "/guest-service"

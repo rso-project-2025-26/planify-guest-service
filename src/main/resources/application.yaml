@@ -1,5 +1,7 @@
 server:
   port: ${SERVER_PORT:8085}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/}
 
 spring:
   application:
@@ -55,6 +57,16 @@ management:
     export:
       prometheus:
         enabled: true
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    path: /swagger-ui/index.html
+    enabled: ${SWAGGER_ENABLED:true}
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
 
 logging:
   level:
