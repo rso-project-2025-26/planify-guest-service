@@ -23,13 +23,13 @@ resources:
 
 probes:
   liveness:
-    path: /guest-service/actuator/health
+    path: /actuator/health
     initialDelaySeconds: 120
     periodSeconds: 10
     timeoutSeconds: 3
     failureThreshold: 3
   readiness:
-    path: /guest-service/actuator/health
+    path: /actuator/health
     initialDelaySeconds: 90
     periodSeconds: 5
     timeoutSeconds: 3
@@ -61,6 +61,3 @@ config:
 
   swagger:
     enabled: "false"
-
-  context:
-    path: "/guest-service"
