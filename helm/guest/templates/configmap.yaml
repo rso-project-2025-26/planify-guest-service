@@ -15,7 +15,6 @@ data:
   JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
   MANAGEMENT_ENDPOINTS_INCLUDE: {{ .Values.config.management.endpointsInclude | quote }}
   SWAGGER_ENABLED: {{ .Values.config.swagger.enabled | quote }}
-  SERVER_CONTEXT_PATH: {{ .Values.config.context.path | quote }}
   LOGGING_LEVEL_ROOT: {{ .Values.config.logging.levelRoot | quote }}
   LOGGING_LEVEL_COM_PLANIFY: {{ .Values.config.logging.levelApp | quote }}
   LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: {{ .Values.config.logging.levelSpringWeb | quote }}
