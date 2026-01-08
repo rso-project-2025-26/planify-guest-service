@@ -12,6 +12,7 @@ data:
   SPRING_KAFKA_CONSUMER_GROUP_ID: {{ .Values.config.kafka.consumerGroup | quote }}
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: {{ .Values.config.keycloak.issuerUri | quote }}
   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: {{ .Values.config.keycloak.jwkSetUri | quote }}
+  USER_SERVICE_BASE_URL: {{ .Values.config.userService.baseUrl | quote }}
   JPA_SHOW_SQL: {{ .Values.config.jpa.showSql | quote }}
   MANAGEMENT_ENDPOINTS_INCLUDE: {{ .Values.config.management.endpointsInclude | quote }}
   SWAGGER_ENABLED: {{ .Values.config.swagger.enabled | quote }}
