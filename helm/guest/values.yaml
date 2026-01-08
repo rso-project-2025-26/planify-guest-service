@@ -48,6 +48,8 @@ config:
   keycloak:
     issuerUri: "https://4.185.235.181.nip.io/keycloak/realms/planify"
     jwkSetUri: "http://keycloak-service:8080/keycloak/realms/planify/protocol/openid-connect/certs"
+  userService:
+    baseUrl: "http://user-service:8082"
   
   jpa:
     showSql: "false"
