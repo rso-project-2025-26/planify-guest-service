@@ -46,8 +46,8 @@ config:
     bootstrapServers: "kafka-service:9092"
     consumerGroup: "guest-service"
   keycloak:
-    issuerUri: "http://keycloak-service:8080/realms/planify"
-    jwkSetUri: "http://keycloak-service:8080/realms/planify/protocol/openid-connect/certs"
+    issuerUri: "https://4.185.235.181.nip.io/keycloak/realms/planify"
+    jwkSetUri: "http://keycloak-service:8080/keycloak/realms/planify/protocol/openid-connect/certs"
   
   jpa:
     showSql: "false"
