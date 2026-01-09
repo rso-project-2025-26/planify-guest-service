@@ -1,0 +1,16 @@
+config:
+  springProfilesActive: dev  
+  jpa:
+    showSql: "true"
+  management:
+    endpointsInclude: "*"  
+  logging:
+    levelRoot: "INFO"
+    levelApp: "DEBUG"
+    levelSpringWeb: "INFO"
+    levelSpringSecurity: "DEBUG"
+
+  swagger:
+    enabled: "true"
+
+replicaCount: 1
