@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: ghcr.io/rso-project-2025-26/planify-guest-service
@@ -15,11 +15,11 @@ service:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
-  limits:
-    cpu: 150m
+    cpu: 100m
     memory: 256Mi
+  limits:
+    cpu: 250m
+    memory: 512Mi
 
 probes:
   liveness:
